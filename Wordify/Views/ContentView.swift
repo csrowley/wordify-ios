@@ -107,8 +107,10 @@ class WordCell: UICollectionViewCell {
     private let definitionLabel = UILabel()
     
     private let saveButton = UIButton(type: .system)
+    private let soundButton = UIButton(type: .system)
     
     var onSaveTapped:  (() -> Void)?
+    var onSoundTapped:  (() -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -130,18 +132,41 @@ class WordCell: UICollectionViewCell {
         saveButton.contentMode = .scaleAspectFit
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         
-        let stackView = UIStackView(arrangedSubviews: [wordLabel, definitionLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 16
-        stackView.alignment = .center
+        soundButton.setImage(UIImage(systemName: "speaker.wave.2"), for: .normal)
+        soundButton.tintColor = .black
+        soundButton.addTarget(self, action: #selector(soundButtonTapped), for: .touchUpInside)
+        soundButton.contentMode = .scaleAspectFit
+        soundButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        let buttonStackView = UIStackView(arrangedSubviews: [saveButton, soundButton])
+        buttonStackView.axis = .horizontal
+        buttonStackView.spacing = 25
+        buttonStackView.alignment = .center
+        
+//        contentView.addSubview(buttonStackView)
+//        buttonStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let mainStackView = UIStackView(arrangedSubviews: [wordLabel, definitionLabel, buttonStackView])
+        mainStackView.axis = .vertical
+        mainStackView.spacing = 20
+        mainStackView.alignment = .center
 
-        contentView.addSubview(stackView)
-        stackView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(mainStackView)
+        
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            stackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9)
+            mainStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            mainStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            mainStackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9)
+        ])
+        
+        NSLayoutConstraint.activate([
+            saveButton.widthAnchor.constraint(equalToConstant: 30),
+            saveButton.heightAnchor.constraint(equalToConstant: 30),
+            
+            soundButton.widthAnchor.constraint(equalToConstant: 30),
+            soundButton.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
 
@@ -156,6 +181,10 @@ class WordCell: UICollectionViewCell {
     
     @objc private func saveButtonTapped() {
         onSaveTapped?()
+    }
+    
+    @objc private func soundButtonTapped() {
+        onSoundTapped?()
     }
 }
 
