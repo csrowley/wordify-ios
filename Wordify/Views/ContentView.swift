@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import SwiftData
 
 // Data Model
 struct VocabularyWord: Identifiable {
@@ -17,43 +18,106 @@ struct VocabularyWord: Identifiable {
 
 // SwiftUI View
 struct ContentView: View {
+    @AppStorage("isFirstLoad") var isFirstLoad = true
+    @Environment(\.modelContext) var modelContext
+    @Query var wordData: [Word]
+    @State private var viewModel = ViewModel()
     // Sample Data
+    let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
+    let silver = UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1)
+    let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
+
+    let gunmentalGray = UIColor(red:0.53, green: 0.62, blue: 0.67, alpha: 1)
+    
+    
     let words = [
-        VocabularyWord(word: "Aberration", definition: "A departure from what is normal or expected."),
-        VocabularyWord(word: "Ascertain", definition: "To find out with certainty."),
-        VocabularyWord(word: "Ebullient", definition: "Full of energy and enthusiasm.")
+        Word(
+            word: "Aberrant",
+            audio: "audio_aberrant.mp3",
+            phonetic: "/ˈæb.ər.ənt/",
+            definition: "Departing from an accepted standard.",
+            difficultyLevel: "C2",
+            wordType: "adjective",
+            example: "His aberrant behavior surprised everyone at the meeting."
+        ),
+
+        Word(
+            word: "Ascertain",
+            audio: "audio_ascertain.mp3",
+            phonetic: "/ˌæs.əˈteɪn/",
+            definition: "To find out or learn with certainty.",
+            difficultyLevel: "B2",
+            wordType: "verb",
+            example: "We need to ascertain the cause of the power outage."
+        ),
+
+        Word(
+            word: "Ebullient",
+            audio: "audio_ebullient.mp3",
+            phonetic: "/ɪˈbʌl.i.ənt/",
+            definition: "Overflowing with enthusiasm or excitement.",
+            difficultyLevel: "C1",
+            wordType: "adjective",
+            example: "Her ebullient personality made her the life of the party."
+        )
     ]
     
     var body: some View {
-
-        
-        TabView{
-            
-            UICollectionViewWrapper(words: words)
-                .edgesIgnoringSafeArea(.all) // Make it full-screen
-                .tabItem{
-                    Label("Home", systemImage: "house")
+        NavigationStack {
+            TabView{
+                UICollectionViewWrapper(words: wordData.isEmpty ? words : wordData)
+                    .background(Color(silver))
+                    .edgesIgnoringSafeArea(.all) // Make it full-screen
+                    .tabItem{
+                        Label("Home", systemImage: "house")
+                    }
+                    .onAppear{
+                        Task{
+                            if isFirstLoad {
+                                if let myJsonData = viewModel.loadGreJSON(){
+                                    try await viewModel.importWordData(from: myJsonData, context: modelContext)
+                                }
+                                isFirstLoad = false
+                            }
+                        }
+                    }
+                
+                
+                SavedWordsView()
+                    .tabItem{
+                        Label("Saved", systemImage: "bookmark")
+                    }
+                
+                Text("Hello:")
+                    .tabItem{
+                        Label("Quiz", systemImage: "pencil")
+                    }
+                
+                Text("Hello:")
+                    .tabItem{
+                        Label("Collections", systemImage: "shippingbox")
+                    }
+                
+            }
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Wordify") // Set your title here
+                        .font(.largeTitle)
+                        .bold()
                 }
-            
-            Text("Hello:")
-                .tabItem{
-                    Label("Saved", systemImage: "bookmark")
-                }
-            Text("Hello:")
-                .tabItem{
-                    Label("Quiz", systemImage: "pencil")
-                }
-            Text("Hello:")
-                .tabItem{
-                    Label("Collections", systemImage: "shippingbox")
-                }
+            }
         }
+        
+        
     }
+    
 }
 
 // UICollectionView Wrapper
 struct UICollectionViewWrapper: UIViewControllerRepresentable {
-    var words: [VocabularyWord]
+    
+    
+    var words: [Word]
 
     func makeUIViewController(context: Context) -> UICollectionViewController {
         let layout = UICollectionViewFlowLayout()
@@ -103,8 +167,13 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
 
 // Custom UICollectionView Cell
 class WordCell: UICollectionViewCell {
+    
+    let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
+
+    
     private let wordLabel = UILabel()
     private let definitionLabel = UILabel()
+    private let phoneticsLabel = UILabel()
     
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
@@ -116,13 +185,19 @@ class WordCell: UICollectionViewCell {
         super.init(frame: frame)
 
         wordLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
-        wordLabel.textColor = .black
+        wordLabel.textColor = jetBlack
         wordLabel.textAlignment = .center
 
         definitionLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
         definitionLabel.textColor = .gray
         definitionLabel.textAlignment = .center
         definitionLabel.numberOfLines = 0
+        
+        phoneticsLabel.font = UIFont.italicSystemFont(ofSize: 18)
+        phoneticsLabel.textColor = .black
+        phoneticsLabel.textAlignment = .center
+        phoneticsLabel.numberOfLines = 0
+
 
         
         saveButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
@@ -143,10 +218,7 @@ class WordCell: UICollectionViewCell {
         buttonStackView.spacing = 25
         buttonStackView.alignment = .center
         
-//        contentView.addSubview(buttonStackView)
-//        buttonStackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let mainStackView = UIStackView(arrangedSubviews: [wordLabel, definitionLabel, buttonStackView])
+        let mainStackView = UIStackView(arrangedSubviews: [wordLabel, phoneticsLabel, definitionLabel, buttonStackView])
         mainStackView.axis = .vertical
         mainStackView.spacing = 20
         mainStackView.alignment = .center
@@ -174,9 +246,10 @@ class WordCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(with word: VocabularyWord) {
+    func configure(with word: Word) {
         wordLabel.text = word.word
         definitionLabel.text = word.definition
+        phoneticsLabel.text = word.phonetic
     }
     
     @objc private func saveButtonTapped() {

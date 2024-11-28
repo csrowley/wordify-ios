@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7933CDDF2CF93711002326F6 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 7933CDDE2CF9370A002326F6 /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7933CDB12CF801AF002326F6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		7933CD9E2CF801AE002326F6 /* Wordify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wordify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7933CDB02CF801AF002326F6 /* WordifyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WordifyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7933CDBA2CF801AF002326F6 /* WordifyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WordifyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7933CDDE2CF9370A002326F6 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		7933CD952CF801AE002326F6 = {
 			isa = PBXGroup;
 			children = (
+				7933CDDE2CF9370A002326F6 /* .gitignore */,
 				7933CDA02CF801AE002326F6 /* Wordify */,
 				7933CDB32CF801AF002326F6 /* WordifyTests */,
 				7933CDBD2CF801AF002326F6 /* WordifyUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7933CDDF2CF93711002326F6 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
