@@ -34,9 +34,22 @@
 		7933CDDE2CF9370A002326F6 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7933CDE42CF93B4D002326F6 /* Exceptions for "Wordify" folder in "Wordify" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7933CD9D2CF801AE002326F6 /* Wordify */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7933CDA02CF801AE002326F6 /* Wordify */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7933CDE42CF93B4D002326F6 /* Exceptions for "Wordify" folder in "Wordify" target */,
+			);
 			path = Wordify;
 			sourceTree = "<group>";
 		};
@@ -406,6 +419,7 @@
 				DEVELOPMENT_TEAM = N9JFPKYWRU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Wordify/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -435,6 +449,7 @@
 				DEVELOPMENT_TEAM = N9JFPKYWRU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Wordify/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

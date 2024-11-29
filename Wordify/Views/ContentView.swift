@@ -19,6 +19,7 @@ struct VocabularyWord: Identifiable {
 // SwiftUI View
 struct ContentView: View {
     @AppStorage("isFirstLoad") var isFirstLoad = true
+    @AppStorage("streakCount") var streakCount = 0
     @Environment(\.modelContext) var modelContext
     @Query var wordData: [Word]
     @State private var viewModel = ViewModel()
@@ -26,6 +27,9 @@ struct ContentView: View {
     let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
     let silver = UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1)
     let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
+    let seashell = UIColor(red: 1, green: 0.945, blue: 0.906, alpha: 1)
+    let navyBlue = UIColor(red: 0, green: 0, blue: 0.502, alpha: 1)
+
 
     let gunmentalGray = UIColor(red:0.53, green: 0.62, blue: 0.67, alpha: 1)
     
@@ -66,13 +70,20 @@ struct ContentView: View {
         NavigationStack {
             TabView{
                 UICollectionViewWrapper(words: wordData.isEmpty ? words : wordData)
-                    .background(Color(silver))
+                    .background(Color(seashell))
                     .edgesIgnoringSafeArea(.all) // Make it full-screen
                     .tabItem{
                         Label("Home", systemImage: "house")
                     }
                     .onAppear{
                         Task{
+                            
+//                            for fontFamilyNames in UIFont.familyNames {
+//                                for fontName in UIFont.fontNames(forFamilyName: fontFamilyNames) {
+//                                    print("FONTNAME:\(fontName)")
+//                                }
+//                            }
+                            
                             if isFirstLoad {
                                 if let myJsonData = viewModel.loadGreJSON(){
                                     try await viewModel.importWordData(from: myJsonData, context: modelContext)
@@ -102,8 +113,53 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Wordify") // Set your title here
-                        .font(.largeTitle)
-                        .bold()
+                        .font(Font.custom("NewsreaderRoman-SemiBold", size: 40))
+                        .padding(.top)
+                }
+                
+                ToolbarItem(placement: .topBarLeading){
+                    Button {
+                        // take to profile view (use navlink?)
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                            .resizable()
+                            .frame(width:30, height:30)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(Color(navyBlue))
+                    }
+                    .padding(.top)
+                }
+                
+                ToolbarItem(placement: .topBarTrailing){
+                    HStack{
+                        Group{
+                            if streakCount == 0{
+                                Group {
+                                    Image(systemName: "flame")
+                                        .resizable()
+                                    
+                                    
+                                    Text("\(streakCount)")
+                                        .font(.custom("NewsReader16pt-Regular", size: 16))
+                                }
+                                .foregroundStyle(Color(navyBlue))
+                            }
+                            else{
+                                Group {
+                                    Image(systemName: "flame.fill")
+                                        .resizable()
+                                    
+                                    
+                                    Text("\(streakCount)")
+                                        .font(.custom("NewsReader16pt-Regular", size: 16))
+                                }
+                                .foregroundStyle(.orange)
+
+                            }
+
+                        }
+                        .padding(.top)
+                    }
                 }
             }
         }
@@ -167,13 +223,15 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
 
 // Custom UICollectionView Cell
 class WordCell: UICollectionViewCell {
-    
+    let charcoal = UIColor(red:0.29, green: 0.29, blue: 0.29, alpha: 1)
     let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
 
     
     private let wordLabel = UILabel()
     private let definitionLabel = UILabel()
     private let phoneticsLabel = UILabel()
+    private let partOfSpeachLabel = UILabel()
+    private let exampleLabel = UILabel()
     
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
@@ -184,19 +242,25 @@ class WordCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
 
-        wordLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
+        wordLabel.font = UIFont(name:"Newsreader16pt-Regular", size:40)
         wordLabel.textColor = jetBlack
         wordLabel.textAlignment = .center
 
-        definitionLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
-        definitionLabel.textColor = .gray
+        definitionLabel.font = UIFont(name:"Newsreader16pt-Regular", size:24)
+        definitionLabel.textColor = charcoal
         definitionLabel.textAlignment = .center
         definitionLabel.numberOfLines = 0
         
-        phoneticsLabel.font = UIFont.italicSystemFont(ofSize: 18)
-        phoneticsLabel.textColor = .black
+        phoneticsLabel.font = UIFont(name:"Newsreader16pt-Italic", size:20)
+        phoneticsLabel.textColor = jetBlack
         phoneticsLabel.textAlignment = .center
         phoneticsLabel.numberOfLines = 0
+        
+        
+        exampleLabel.font = UIFont(name:"Newsreader16pt-Italic", size:20)
+        exampleLabel.textColor = charcoal
+        exampleLabel.textAlignment = .center
+        exampleLabel.numberOfLines = 0
 
 
         
@@ -218,7 +282,7 @@ class WordCell: UICollectionViewCell {
         buttonStackView.spacing = 25
         buttonStackView.alignment = .center
         
-        let mainStackView = UIStackView(arrangedSubviews: [wordLabel, phoneticsLabel, definitionLabel, buttonStackView])
+        let mainStackView = UIStackView(arrangedSubviews: [wordLabel, phoneticsLabel, definitionLabel, exampleLabel, buttonStackView])
         mainStackView.axis = .vertical
         mainStackView.spacing = 20
         mainStackView.alignment = .center
@@ -248,8 +312,10 @@ class WordCell: UICollectionViewCell {
 
     func configure(with word: Word) {
         wordLabel.text = word.word
-        definitionLabel.text = word.definition
+        definitionLabel.text = "(\(word.wordType)) \(word.definition)"
         phoneticsLabel.text = word.phonetic
+        
+        exampleLabel.text = "\(word.example)"
     }
     
     @objc private func saveButtonTapped() {
