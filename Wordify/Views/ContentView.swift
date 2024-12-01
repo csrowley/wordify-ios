@@ -22,6 +22,7 @@ struct ContentView: View {
     @AppStorage("streakCount") var streakCount = 0
     @Environment(\.modelContext) var modelContext
     @Query var wordData: [Word]
+    
     @State private var viewModel = ViewModel()
     // Sample Data
     let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
@@ -77,12 +78,6 @@ struct ContentView: View {
                     }
                     .onAppear{
                         Task{
-                            
-//                            for fontFamilyNames in UIFont.familyNames {
-//                                for fontName in UIFont.fontNames(forFamilyName: fontFamilyNames) {
-//                                    print("FONTNAME:\(fontName)")
-//                                }
-//                            }
                             
                             if isFirstLoad {
                                 if let myJsonData = viewModel.loadGreJSON(){
@@ -171,10 +166,10 @@ struct ContentView: View {
 
 // UICollectionView Wrapper
 struct UICollectionViewWrapper: UIViewControllerRepresentable {
-    
-    
-    var words: [Word]
+    @Environment(\.modelContext) var modelContext
 
+    var words: [Word]
+    
     func makeUIViewController(context: Context) -> UICollectionViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -192,33 +187,56 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         collectionViewController.collectionView.dataSource = context.coordinator
         return collectionViewController
     }
-
+    
     func updateUIViewController(_ uiViewController: UICollectionViewController, context: Context) {
         // Update data if needed
     }
-
+    
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        Coordinator(parent: self, words: words)
     }
-
-    class Coordinator: NSObject, UICollectionViewDataSource {
+    
+    class Coordinator: NSObject, UICollectionViewDelegate, UICollectionViewDataSource {
         var parent: UICollectionViewWrapper
-
-        init(_ parent: UICollectionViewWrapper) {
+        var words: [Word]
+        var modelContext: ModelContext { parent.modelContext }
+        
+        init(parent: UICollectionViewWrapper, words: [Word]) {
             self.parent = parent
+            self.words = words
         }
-
+        
         func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-            return parent.words.count
+            return words.count
         }
-
+        
         func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "WordCell", for: indexPath) as! WordCell
             let word = parent.words[indexPath.item]
+            
+            // Check if the word is already a favorite
+            
             cell.configure(with: word)
+            
+            cell.onSaveTapped =  { [weak self] in
+                word.isFavorite.toggle()
+                do {
+                    try? self?.modelContext.save()
+                    cell.configure(with: word)
+                    
+                } catch {
+                    print("error saving favorite: \(error.localizedDescription)")
+                }
+            }
+            
             return cell
         }
+        
+
+        
+
     }
+    
 }
 
 // Custom UICollectionView Cell
@@ -235,6 +253,8 @@ class WordCell: UICollectionViewCell {
     
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
+    
+    private var currentWord: Word?
     
     var onSaveTapped:  (() -> Void)?
     var onSoundTapped:  (() -> Void)?
@@ -311,15 +331,25 @@ class WordCell: UICollectionViewCell {
     }
 
     func configure(with word: Word) {
+        currentWord = word
         wordLabel.text = word.word
         definitionLabel.text = "(\(word.wordType)) \(word.definition)"
         phoneticsLabel.text = word.phonetic
         
         exampleLabel.text = "\(word.example)"
+        
+        let saveButtonImage = word.isFavorite ?
+            UIImage(systemName: "bookmark.fill") :
+            UIImage(systemName: "bookmark")
+        
+        saveButton.setImage(saveButtonImage, for: .normal)
+
     }
     
     @objc private func saveButtonTapped() {
-        onSaveTapped?()
+        if let word = currentWord {
+            onSaveTapped?()
+        }
     }
     
     @objc private func soundButtonTapped() {

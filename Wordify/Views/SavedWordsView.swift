@@ -10,17 +10,17 @@ import SwiftUI
 import SwiftData
 
 struct SavedWordsView: View {
-    @Query var savedWords: [Word]
+    @Query(filter: #Predicate<Word> { word in
+        word.isFavorite == true
+    }) private var savedWords: [Word]
     
     var body: some View {
-        VStack {
-            if savedWords.isEmpty {
-                Text("No saved words yet.")
-                    .foregroundColor(.gray)
-            } else {
-                ForEach(savedWords) { word in
-                    Text(word.word)
-                }
+        List(savedWords) { word in
+            VStack(alignment: .leading) {
+                Text(word.word)
+                    .font(.headline)
+                Text(word.definition)
+                    .font(.subheadline)
             }
         }
     }

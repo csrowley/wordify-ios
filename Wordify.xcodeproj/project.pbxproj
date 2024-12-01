@@ -35,7 +35,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7933CDE42CF93B4D002326F6 /* Exceptions for "Wordify" folder in "Wordify" target */ = {
+		79CBDF682CFBBD6C00C7FDAE /* Exceptions for "Wordify" folder in "Wordify" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -48,7 +48,7 @@
 		7933CDA02CF801AE002326F6 /* Wordify */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				7933CDE42CF93B4D002326F6 /* Exceptions for "Wordify" folder in "Wordify" target */,
+				79CBDF682CFBBD6C00C7FDAE /* Exceptions for "Wordify" folder in "Wordify" target */,
 			);
 			path = Wordify;
 			sourceTree = "<group>";
