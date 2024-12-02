@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 import SwiftData
+import AVFoundation
 
 // Data Model
 struct VocabularyWord: Identifiable {
@@ -20,6 +21,7 @@ struct VocabularyWord: Identifiable {
 struct ContentView: View {
     @AppStorage("isFirstLoad") var isFirstLoad = true
     @AppStorage("streakCount") var streakCount = 0
+    @AppStorage("lastScrollIndex") var lastScrollIndex: Int = 0
     @Environment(\.modelContext) var modelContext
     @Query var wordData: [Word]
     
@@ -69,6 +71,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
+            
             TabView{
                 UICollectionViewWrapper(words: wordData.isEmpty ? words : wordData)
                     .background(Color(seashell))
@@ -96,12 +99,12 @@ struct ContentView: View {
                 
                 Text("Hello:")
                     .tabItem{
-                        Label("Quiz", systemImage: "pencil")
+                        Label("Quiz", systemImage: "graduationcap")
                     }
                 
                 Text("Hello:")
                     .tabItem{
-                        Label("Collections", systemImage: "shippingbox")
+                        Label("Categories", systemImage: "books.vertical")
                     }
                 
             }
@@ -110,6 +113,7 @@ struct ContentView: View {
                     Text("Wordify") // Set your title here
                         .font(Font.custom("NewsreaderRoman-SemiBold", size: 40))
                         .padding(.top)
+                        .foregroundStyle(Color(jetBlack))
                 }
                 
                 ToolbarItem(placement: .topBarLeading){
@@ -167,6 +171,8 @@ struct ContentView: View {
 // UICollectionView Wrapper
 struct UICollectionViewWrapper: UIViewControllerRepresentable {
     @Environment(\.modelContext) var modelContext
+    @AppStorage("lastScrollIndex") var lastScrollIndex: Int = 0
+
 
     var words: [Word]
     
@@ -174,7 +180,7 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.itemSize = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        layout.minimumLineSpacing = 0 // No spacing between pages
+        layout.minimumLineSpacing = 0
         
         let collectionViewController = UICollectionViewController(collectionViewLayout: layout)
         collectionViewController.collectionView.isPagingEnabled = true
@@ -185,6 +191,29 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         collectionViewController.collectionView.register(WordCell.self, forCellWithReuseIdentifier: "WordCell")
         
         collectionViewController.collectionView.dataSource = context.coordinator
+        collectionViewController.collectionView.delegate = context.coordinator
+        
+        if lastScrollIndex > 0 && lastScrollIndex < words.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                collectionViewController.collectionView.scrollToItem(
+                    at: IndexPath(item: lastScrollIndex, section: 0),
+                    at: .top,
+                    animated: false
+                )
+            }
+        }
+        else if lastScrollIndex >= words.count - 1 {
+            print("resettings scroll index to 0")
+            lastScrollIndex = 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                collectionViewController.collectionView.scrollToItem(
+                    at: IndexPath(item: 0, section: 0),
+                    at: .top,
+                    animated: false
+                )
+            }
+        }
+        
         return collectionViewController
     }
     
@@ -229,18 +258,24 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
                 }
             }
             
+            
             return cell
         }
         
-
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+            let page = Int(scrollView.contentOffset.y / scrollView.bounds.height)
+            parent.lastScrollIndex = page
+        }
         
-
     }
     
 }
 
 // Custom UICollectionView Cell
 class WordCell: UICollectionViewCell {
+    
+    private var audioPlayer: AVPlayer?
+    
     let charcoal = UIColor(red:0.29, green: 0.29, blue: 0.29, alpha: 1)
     let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
 
@@ -253,11 +288,13 @@ class WordCell: UICollectionViewCell {
     
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
+    private let categoryButton = UIButton(type: .system)
     
     private var currentWord: Word?
     
     var onSaveTapped:  (() -> Void)?
     var onSoundTapped:  (() -> Void)?
+    var onCategoryTapped:  (() -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -266,10 +303,12 @@ class WordCell: UICollectionViewCell {
         wordLabel.textColor = jetBlack
         wordLabel.textAlignment = .center
 
+        
         definitionLabel.font = UIFont(name:"Newsreader16pt-Regular", size:24)
         definitionLabel.textColor = charcoal
         definitionLabel.textAlignment = .center
         definitionLabel.numberOfLines = 0
+        
         
         phoneticsLabel.font = UIFont(name:"Newsreader16pt-Italic", size:20)
         phoneticsLabel.textColor = jetBlack
@@ -281,23 +320,33 @@ class WordCell: UICollectionViewCell {
         exampleLabel.textColor = charcoal
         exampleLabel.textAlignment = .center
         exampleLabel.numberOfLines = 0
-
-
+        
         
         saveButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
         saveButton.tintColor = .black
-        
         saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
         saveButton.contentMode = .scaleAspectFit
         saveButton.translatesAutoresizingMaskIntoConstraints = false
+        saveButton.isSymbolAnimationEnabled = true
+
+        
         
         soundButton.setImage(UIImage(systemName: "speaker.wave.2"), for: .normal)
         soundButton.tintColor = .black
         soundButton.addTarget(self, action: #selector(soundButtonTapped), for: .touchUpInside)
         soundButton.contentMode = .scaleAspectFit
         soundButton.translatesAutoresizingMaskIntoConstraints = false
+        soundButton.isSymbolAnimationEnabled = true
         
-        let buttonStackView = UIStackView(arrangedSubviews: [saveButton, soundButton])
+        categoryButton.setImage(UIImage(systemName: "books.vertical"), for: .normal)
+        categoryButton.tintColor = .black
+        categoryButton.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
+        categoryButton.contentMode = .scaleAspectFit
+        categoryButton.translatesAutoresizingMaskIntoConstraints = false
+        categoryButton.isSymbolAnimationEnabled = true
+
+        
+        let buttonStackView = UIStackView(arrangedSubviews: [saveButton, soundButton, categoryButton])
         buttonStackView.axis = .horizontal
         buttonStackView.spacing = 25
         buttonStackView.alignment = .center
@@ -306,6 +355,8 @@ class WordCell: UICollectionViewCell {
         mainStackView.axis = .vertical
         mainStackView.spacing = 20
         mainStackView.alignment = .center
+        
+
 
         contentView.addSubview(mainStackView)
         
@@ -314,7 +365,9 @@ class WordCell: UICollectionViewCell {
         NSLayoutConstraint.activate([
             mainStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             mainStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            mainStackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9)
+            mainStackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.9),
+            
+
         ])
         
         NSLayoutConstraint.activate([
@@ -338,6 +391,7 @@ class WordCell: UICollectionViewCell {
         
         exampleLabel.text = "\(word.example)"
         
+        
         let saveButtonImage = word.isFavorite ?
             UIImage(systemName: "bookmark.fill") :
             UIImage(systemName: "bookmark")
@@ -347,13 +401,67 @@ class WordCell: UICollectionViewCell {
     }
     
     @objc private func saveButtonTapped() {
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // Animation
+        UIView.animate(withDuration: 0.1, animations: {
+            self.saveButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.saveButton.transform = .identity
+            }
+        }
         if let word = currentWord {
             onSaveTapped?()
         }
     }
     
     @objc private func soundButtonTapped() {
+        
+        
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // Animation
+        UIView.animate(withDuration: 0.1, animations: {
+            self.soundButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.soundButton.transform = .identity
+            }
+        }
+        
+        
+        guard let word = currentWord,
+              let audioURL = URL(string: word.audio) else {
+            print("Error loading audio")
+            return
+        }
+        
+        let playerItem = AVPlayerItem(url: audioURL)
+        audioPlayer = AVPlayer(url: audioURL)
+                
+        audioPlayer?.play()
+        
         onSoundTapped?()
+    }
+    
+    @objc private func categoryButtonTapped() {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // Animation
+        UIView.animate(withDuration: 0.1, animations: {
+            self.categoryButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.categoryButton.transform = .identity
+            }
+        }
+        
+        onCategoryTapped?()
     }
 }
 
