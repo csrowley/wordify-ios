@@ -18,7 +18,7 @@ import SwiftData
 ///
 
 @Model
-final class Word {
+final class Word: Identifiable{
     @Attribute(.unique) var id: UUID
     var word: String
     var audio: String

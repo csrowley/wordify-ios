@@ -26,6 +26,7 @@ struct ContentView: View {
     @Query var wordData: [Word]
     
     @State private var viewModel = ViewModel()
+    @State private var favoritingUpdator: WordFavoritingProtocol?
     // Sample Data
     let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
     let silver = UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1)
@@ -92,7 +93,7 @@ struct ContentView: View {
                     }
                 
                 
-                SavedWordsView()
+                SavedWordsView() //insert ui Button
                     .tabItem{
                         Label("Saved", systemImage: "bookmark")
                     }
@@ -272,7 +273,8 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
 }
 
 // Custom UICollectionView Cell
-class WordCell: UICollectionViewCell {
+class WordCell: UICollectionViewCell{
+    @Environment(\.modelContext) var modelContext
     
     private var audioPlayer: AVPlayer?
     
@@ -290,7 +292,7 @@ class WordCell: UICollectionViewCell {
     private let soundButton = UIButton(type: .system)
     private let categoryButton = UIButton(type: .system)
     
-    private var currentWord: Word?
+     var currentWord: Word?
     
     var onSaveTapped:  (() -> Void)?
     var onSoundTapped:  (() -> Void)?
@@ -385,19 +387,18 @@ class WordCell: UICollectionViewCell {
 
     func configure(with word: Word) {
         currentWord = word
-        wordLabel.text = word.word
-        definitionLabel.text = "(\(word.wordType)) \(word.definition)"
-        phoneticsLabel.text = word.phonetic
+        updateUI() // Move all UI updates to a separate method
         
-        exampleLabel.text = "\(word.example)"
+        // Remove old observer before adding new one
+        NotificationCenter.default.removeObserver(self)
         
-        
-        let saveButtonImage = word.isFavorite ?
-            UIImage(systemName: "bookmark.fill") :
-            UIImage(systemName: "bookmark")
-        
-        saveButton.setImage(saveButtonImage, for: .normal)
-
+        // Use SwiftData's notification
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(modelContextDidChange),
+            name: Notification.Name("WordFavoriteStatusChanged"), // Custom notification name
+            object: nil
+        )
     }
     
     @objc private func saveButtonTapped() {
@@ -463,6 +464,30 @@ class WordCell: UICollectionViewCell {
         
         onCategoryTapped?()
     }
+    
+    @objc private func modelContextDidChange() {
+        updateUI()
+    }
+    
+    private func updateUI() {
+        guard let word = currentWord else { return }
+        wordLabel.text = word.word
+        definitionLabel.text = "(\(word.wordType)) \(word.definition)"
+        phoneticsLabel.text = word.phonetic
+        exampleLabel.text = "\(word.example)"
+        
+        let saveButtonImage = word.isFavorite ?
+            UIImage(systemName: "bookmark.fill") :
+            UIImage(systemName: "bookmark")
+        
+        saveButton.setImage(saveButtonImage, for: .normal)
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        NotificationCenter.default.removeObserver(self)
+    }
+    
 }
 
 
