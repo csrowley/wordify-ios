@@ -36,20 +36,49 @@ extension ContentView{
         }
         
         @MainActor
-        func importWordData(from data: Data, context: ModelContext) async throws {
+        func importWordData(from data: Data, context: ModelContext, categoryType: String) async throws {
             if let jsonWords = parseJSONData(data){
                 for jsonWord in jsonWords{
-                    let newWord = Word(word: jsonWord.word, audio: jsonWord.audio, phonetic: jsonWord.phonetic, definition: jsonWord.definition, difficultyLevel: jsonWord.difficultyLevel, wordType: jsonWord.type, example: jsonWord.example)
+                    let newWord = Word(word: jsonWord.word, audio: jsonWord.audio, phonetic: jsonWord.phonetic, definition: jsonWord.definition, category: jsonWord.category, wordType: jsonWord.type, example: jsonWord.example)
                     context.insert(newWord)
                 }
                 
+                let newCategory = Category(category: categoryType)
+                context.insert(newCategory)
+                
                 do{
                     try context.save()
-                    print("Successfuly saved word")
+                    print("Successfuly saved word and category")
                 } catch {
-                    print("error saving word: \(error.localizedDescription)")
+                    print("error saving word or category: \(error.localizedDescription)")
                 }
             }
+        }
+        
+        func checkForStreakUpdate(lastLoginDateStr: String) -> Int {
+//            let currentDate = Date()
+            let calendar = Calendar.current
+            let current = Date()
+            
+            guard !lastLoginDateStr.isEmpty else {
+                return -1
+            }
+            
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-mm-dd"
+            
+            guard let lastLoginDate = formatter.date(from: lastLoginDateStr) else {
+                return -1
+            }
+            
+            let components = calendar.dateComponents([.day], from: current, to: lastLoginDate)
+            
+            // Returns amount of days since last login
+            if let timeSince = components.day {
+                return timeSince
+            }
+            
+            return -1
         }
     }
     
@@ -61,7 +90,7 @@ extension ContentView{
         var phonetic: String
         var definition: String
         var type: String
-        var difficultyLevel: String
+        var category: String
         var example: String
     }
 }

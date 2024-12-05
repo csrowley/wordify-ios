@@ -13,7 +13,8 @@ struct WordifyApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Word.self,
-            Favorite.self
+            Favorite.self,
+            Category.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

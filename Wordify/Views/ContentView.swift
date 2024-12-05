@@ -22,11 +22,14 @@ struct ContentView: View {
     @AppStorage("isFirstLoad") var isFirstLoad = true
     @AppStorage("streakCount") var streakCount = 0
     @AppStorage("lastScrollIndex") var lastScrollIndex: Int = 0
+    @AppStorage("lastLoginDate") var lastLoginDate = ""
     @Environment(\.modelContext) var modelContext
     @Query var wordData: [Word]
     
     @State private var viewModel = ViewModel()
     @State private var favoritingUpdator: WordFavoritingProtocol?
+    @State private var showAccountView = false
+    
     // Sample Data
     let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
     let silver = UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1)
@@ -44,7 +47,7 @@ struct ContentView: View {
             audio: "audio_aberrant.mp3",
             phonetic: "/ˈæb.ər.ənt/",
             definition: "Departing from an accepted standard.",
-            difficultyLevel: "C2",
+            category: "C2",
             wordType: "adjective",
             example: "His aberrant behavior surprised everyone at the meeting."
         ),
@@ -54,7 +57,7 @@ struct ContentView: View {
             audio: "audio_ascertain.mp3",
             phonetic: "/ˌæs.əˈteɪn/",
             definition: "To find out or learn with certainty.",
-            difficultyLevel: "B2",
+            category: "B2",
             wordType: "verb",
             example: "We need to ascertain the cause of the power outage."
         ),
@@ -64,7 +67,7 @@ struct ContentView: View {
             audio: "audio_ebullient.mp3",
             phonetic: "/ɪˈbʌl.i.ənt/",
             definition: "Overflowing with enthusiasm or excitement.",
-            difficultyLevel: "C1",
+            category: "C1",
             wordType: "adjective",
             example: "Her ebullient personality made her the life of the party."
         )
@@ -84,10 +87,33 @@ struct ContentView: View {
                         Task{
                             
                             if isFirstLoad {
+                                let currentDate = Date()
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-mm-dd"
+                                
+                                lastLoginDate = formatter.string(from: currentDate)
                                 if let myJsonData = viewModel.loadGreJSON(){
-                                    try await viewModel.importWordData(from: myJsonData, context: modelContext)
+                                    
+                                    // Add modularity, where I can add new word sets when needed
+                                    try await viewModel.importWordData(from: myJsonData, context: modelContext, categoryType: "C2")
                                 }
                                 isFirstLoad = false
+                            }
+                            else{
+                                let daysSinceLogin = viewModel.checkForStreakUpdate(lastLoginDateStr: lastLoginDate)
+                                
+                                switch daysSinceLogin {
+                                case 0:
+                                    break
+                                case 1:
+                                    streakCount += 1
+                                    break
+                                default:
+                                    streakCount = 0
+                                    break
+                                    //change to non lit flame
+                                }
+                                
                             }
                         }
                     }
@@ -113,13 +139,12 @@ struct ContentView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Wordify") // Set your title here
                         .font(Font.custom("NewsreaderRoman-SemiBold", size: 40))
-                        .padding(.top)
                         .foregroundStyle(Color(jetBlack))
                 }
                 
                 ToolbarItem(placement: .topBarLeading){
-                    Button {
-                        // take to profile view (use navlink?)
+                    NavigationLink{
+                        AccountView()
                     } label: {
                         Image(systemName: "person.crop.circle")
                             .resizable()
@@ -127,7 +152,6 @@ struct ContentView: View {
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(Color(navyBlue))
                     }
-                    .padding(.top)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing){
@@ -158,10 +182,10 @@ struct ContentView: View {
                             }
 
                         }
-                        .padding(.top)
                     }
                 }
             }
+
         }
         
         
@@ -276,6 +300,7 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
 class WordCell: UICollectionViewCell{
     @Environment(\.modelContext) var modelContext
     
+    
     private var audioPlayer: AVPlayer?
     
     let charcoal = UIColor(red:0.29, green: 0.29, blue: 0.29, alpha: 1)
@@ -291,6 +316,7 @@ class WordCell: UICollectionViewCell{
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
     private let categoryButton = UIButton(type: .system)
+//    private let newCategoryButton = PickerButtonRepresentable(selectedCategory: <#T##Binding<Category?>#>, systemIconName: <#T##String#>, categories: <#T##[Category]#>)
     
      var currentWord: Word?
     

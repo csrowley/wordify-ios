@@ -24,20 +24,21 @@ final class Word: Identifiable{
     var audio: String
     var phonetic: String
     var definition: String
-    var difficultyLevel: String
+    var category: String
     var wordType: String
     var example: String
     var isFavorite: Bool = false
     
     //@Relationship(inverse: \Category.word_list) var categories: [Category]
+    // var category: Category
     
-    init(id: UUID = UUID(), word: String, audio: String, phonetic: String, definition: String, difficultyLevel: String, wordType: String, example: String) {
+    init(id: UUID = UUID(), word: String, audio: String, phonetic: String, definition: String, category: String, wordType: String, example: String) {
         self.id = id
         self.word = word
         self.audio = audio
         self.phonetic = phonetic
         self.definition = definition
-        self.difficultyLevel = difficultyLevel
+        self.category = category
         self.wordType = wordType
         self.example = example
     }
@@ -54,13 +55,13 @@ final class Favorite {
     }
 }
 
-//@Model
-//final class Category {
-//    var category: String
-//    var word_list: [Word]
+@Model
+final class Category {
+    var category: String
+    var word_list: [Word]
 //    @Relationship(inverse: \Word.categories) var word_list: [Word]
-//    init(category: String, word_list: [Word] = []) {
-//        self.category = category
-//        self.word_list = word_list
-//    }
-//}
+    init(category: String, word_list: [Word] = []) {
+        self.category = category
+        self.word_list = word_list
+    }
+}
