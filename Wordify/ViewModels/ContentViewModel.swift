@@ -13,8 +13,8 @@ extension ContentView{
     
     @Observable
     class ViewModel {
-        func loadGreJSON() -> Data? {
-            if let url = Bundle.main.url(forResource: "word_data", withExtension: ".json"){
+        func loadJSON(from fileName: String) -> Data? {
+            if let url = Bundle.main.url(forResource: fileName, withExtension: ".json"){
                 do {
                     return try Data(contentsOf: url)
                 } catch {
@@ -80,6 +80,8 @@ extension ContentView{
                     parentCategory!.word_list.append(newWord)
                     context.insert(newWord)
                 }
+                
+                
                 
                 do {
                     try context.save()

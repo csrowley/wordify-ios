@@ -21,6 +21,7 @@ struct SavedWordsView: View {
     @Query(filter: #Predicate<Word> { word in
         word.isFavorite == true
     }) private var savedWords: [Word]
+    @Query var categories: [Category]
     
     var body: some View {
         NavigationStack {
@@ -40,6 +41,9 @@ struct SavedWordsView: View {
                 .swipeActions(edge: .trailing, allowsFullSwipe: true){
                     Button(role: .destructive){
                         unFavorite(word)
+                        
+                        print(categories)
+                        
                     } label : {
                         Label("Unfavorite", systemImage: "heart.slash")
                     }

@@ -73,6 +73,15 @@ struct ContentView: View {
         Category(category: "C1")
     ]
     
+    init() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color(seashell))
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
         NavigationStack {
             
@@ -81,7 +90,7 @@ struct ContentView: View {
                     .background(Color(seashell))
                     .edgesIgnoringSafeArea(.all) // Make it full-screen
                     .tabItem{
-                        Label("Home", systemImage: "house")
+                        Label("Discover", systemImage: "magnifyingglass")
                     }
                     .onAppear{
                         Task{
@@ -92,10 +101,18 @@ struct ContentView: View {
                                 formatter.dateFormat = "yyyy-mm-dd"
                                 
                                 lastLoginDate = formatter.string(from: currentDate)
-                                if let myJsonData = viewModel.loadGreJSON(){
+                                if let myJsonData = viewModel.loadJSON(from: "word_data"){
                                     
                                     // Add modularity, where I can add new word sets when needed
                                     try await viewModel.importWordData(from: myJsonData, context: modelContext, categoryType: "C2")
+
+                                }
+                                
+                                if let newJson = viewModel.loadJSON(from: "testData"){
+                                    
+                                    // Add modularity, where I can add new word sets when needed
+                                    try await viewModel.importWordData(from: newJson, context: modelContext, categoryType: "C1")
+
                                 }
                                 isFirstLoad = false
                             }
@@ -239,25 +256,26 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         collectionViewController.collectionView.dataSource = context.coordinator
         collectionViewController.collectionView.delegate = context.coordinator
         
-        if lastScrollIndex > 0 && lastScrollIndex < words.count {
+        collectionViewController.collectionView.bounces = false
+        collectionViewController.collectionView.alwaysBounceVertical = false
+        
+        if !words.isEmpty {
+            if lastScrollIndex >= words.count {
+                lastScrollIndex = words.count
+            }
+        }
+        
+        if lastScrollIndex > 0{
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 collectionViewController.collectionView.scrollToItem(
-                    at: IndexPath(item: lastScrollIndex, section: 0),
+                    at: IndexPath(item: min(lastScrollIndex, words.count - 1), section: 0),
                     at: .top,
                     animated: false
                 )
             }
         }
-        else if lastScrollIndex >= words.count - 1 {
-            print("resettings scroll index to 0")
+        else {
             lastScrollIndex = 0
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                collectionViewController.collectionView.scrollToItem(
-                    at: IndexPath(item: 0, section: 0),
-                    at: .top,
-                    animated: false
-                )
-            }
         }
         
         return collectionViewController
@@ -287,6 +305,11 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         
         func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "WordCell", for: indexPath) as! WordCell
+            
+            guard indexPath.item < parent.words.count else {
+                return cell
+            }
+            
             let word = parent.words[indexPath.item]
             
             // Check if the word is already a favorite
