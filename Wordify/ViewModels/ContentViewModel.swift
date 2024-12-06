@@ -77,6 +77,7 @@ extension ContentView{
                         example: jsonWord.example,
                         parentCategory: parentCategory! //already handeled above (force wrap ok)
                     )
+                    parentCategory!.word_list.append(newWord)
                     context.insert(newWord)
                 }
                 

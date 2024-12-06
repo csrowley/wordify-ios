@@ -30,15 +30,13 @@ class WordCell: UICollectionViewCell{
     
     private let saveButton = UIButton(type: .system)
     private let soundButton = UIButton(type: .system)
-    private let categoryButton = UIButton(type: .system)
 
-    private let newCategoryButton = PickerButton()
+    private let categoryButton = PickerButton()
     
     var currentWord: Word?
     
     var onSaveTapped:  (() -> Void)?
     var onSoundTapped:  (() -> Void)?
-    var onCategoryTapped:  (() -> Void)?
     
     var onCategorySelected: ((Category) -> Void)?
 
@@ -84,25 +82,19 @@ class WordCell: UICollectionViewCell{
         soundButton.translatesAutoresizingMaskIntoConstraints = false
         soundButton.isSymbolAnimationEnabled = true
         
+        
         categoryButton.setImage(UIImage(systemName: "books.vertical"), for: .normal)
         categoryButton.tintColor = .black
-        categoryButton.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
+        categoryButton.addTarget(self, action: #selector(newCategoryButtonTapped), for: .touchUpInside)
         categoryButton.contentMode = .scaleAspectFit
         categoryButton.translatesAutoresizingMaskIntoConstraints = false
         categoryButton.isSymbolAnimationEnabled = true
-        
-        newCategoryButton.setImage(UIImage(systemName: "books.vertical"), for: .normal)
-        newCategoryButton.tintColor = .black
-        newCategoryButton.addTarget(self, action: #selector(newCategoryButtonTapped), for: .touchUpInside)
-        newCategoryButton.contentMode = .scaleAspectFit
-        newCategoryButton.translatesAutoresizingMaskIntoConstraints = false
-        newCategoryButton.isSymbolAnimationEnabled = true
 
         
         
 
         
-        let buttonStackView = UIStackView(arrangedSubviews: [saveButton, soundButton, newCategoryButton])
+        let buttonStackView = UIStackView(arrangedSubviews: [saveButton, soundButton, categoryButton])
         buttonStackView.axis = .horizontal
         buttonStackView.spacing = 25
         buttonStackView.alignment = .center
@@ -133,8 +125,8 @@ class WordCell: UICollectionViewCell{
             soundButton.widthAnchor.constraint(equalToConstant: 30),
             soundButton.heightAnchor.constraint(equalToConstant: 30),
             
-            newCategoryButton.widthAnchor.constraint(equalToConstant: 30),
-            newCategoryButton.heightAnchor.constraint(equalToConstant: 30)
+            categoryButton.widthAnchor.constraint(equalToConstant: 30),
+            categoryButton.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
 
@@ -156,6 +148,10 @@ class WordCell: UICollectionViewCell{
             name: Notification.Name("WordFavoriteStatusChanged"), // Custom notification name
             object: nil
         )
+        
+        categoryButton.onCategorySelected = { [weak self] category in
+            self?.onCategorySelected?(category)
+        }
     }
     
     @objc private func saveButtonTapped() {
@@ -206,22 +202,6 @@ class WordCell: UICollectionViewCell{
         onSoundTapped?()
     }
     
-    @objc private func categoryButtonTapped() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
-        
-        // Animation
-        UIView.animate(withDuration: 0.1, animations: {
-            self.categoryButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-        }) { _ in
-            UIView.animate(withDuration: 0.1) {
-                self.categoryButton.transform = .identity
-            }
-        }
-        
-        onCategoryTapped?()
-    }
-    
     @objc private func newCategoryButtonTapped() {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
@@ -234,6 +214,8 @@ class WordCell: UICollectionViewCell{
                 self.categoryButton.transform = .identity
             }
         }
+        
+        
     }
     
     @objc private func modelContextDidChange() {
@@ -255,9 +237,9 @@ class WordCell: UICollectionViewCell{
     }
     
     func configureCategoryButton(with categories: [Category]){
-        newCategoryButton.setup(systemIcon: "books.vertical", data: categories)
+        categoryButton.setup(systemIcon: "books.vertical", data: categories)
         
-        newCategoryButton.onCategorySelected = { [weak self] category in
+        categoryButton.onCategorySelected = { [weak self] category in
             self?.onCategorySelected?(category)
         }
     }

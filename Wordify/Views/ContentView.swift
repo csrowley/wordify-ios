@@ -25,6 +25,8 @@ struct ContentView: View {
     @AppStorage("lastLoginDate") var lastLoginDate = ""
     @Environment(\.modelContext) var modelContext
     @Query var wordData: [Word]
+    @Query var categories: [Category]
+    @State private var selectedCategory: Category?
     
     @State private var viewModel = ViewModel()
     @State private var favoritingUpdator: WordFavoritingProtocol?
@@ -54,18 +56,6 @@ struct ContentView: View {
         ),
 
         Word(
-            word: "Ascertain",
-            audio: "audio_ascertain.mp3",
-            phonetic: "/ˌæs.əˈteɪn/",
-            definition: "To find out or learn with certainty.",
-            category: "B2",
-            wordType: "verb",
-            example: "We need to ascertain the cause of the power outage.",
-            parentCategory: Category(category: "B2")
-
-        ),
-
-        Word(
             word: "Ebullient",
             audio: "audio_ebullient.mp3",
             phonetic: "/ɪˈbʌl.i.ənt/",
@@ -78,11 +68,16 @@ struct ContentView: View {
         )
     ]
     
+    let tempCategories = [
+        Category(category: "C2"),
+        Category(category: "C1")
+    ]
+    
     var body: some View {
         NavigationStack {
             
             TabView{
-                UICollectionViewWrapper(words: wordData.isEmpty ? words : wordData)
+                UICollectionViewWrapper(selectedCategory: $selectedCategory)
                     .background(Color(seashell))
                     .edgesIgnoringSafeArea(.all) // Make it full-screen
                     .tabItem{
@@ -133,11 +128,6 @@ struct ContentView: View {
                     .tabItem{
                         Label("Quiz", systemImage: "graduationcap")
                     }
-                
-//                Text("Hello:")
-//                    .tabItem{
-//                        Label("Categories", systemImage: "books.vertical")
-//                    }
                 
             }
             .toolbar {
@@ -202,38 +192,36 @@ struct ContentView: View {
 struct UICollectionViewWrapper: UIViewControllerRepresentable {
     @Environment(\.modelContext) var modelContext
     @AppStorage("lastScrollIndex") var lastScrollIndex: Int = 0
-    @State private var selectedCategory: Category?
-    
+//    var words: [Word]
+    @Binding var selectedCategory: Category?
     @Query var categories: [Category]
+    
+    let previewWords = [
+        Word(
+            word: "Aberrant",
+            audio: "audio_aberrant.mp3",
+            phonetic: "/ˈæb.ər.ənt/",
+            definition: "Departing from an accepted standard.",
+            category: "C2",
+            wordType: "adjective",
+            example: "His aberrant behavior surprised everyone at the meeting.",
+            parentCategory: Category(category: "C2")
+        )
+    ]
+    
+    
+    
+    
+    private var words: [Word] {
+        if let category = selectedCategory {
+            return category.word_list
+        } else {
+            
+            return categories.first?.word_list ?? previewWords
+        }
+    }
 
-
-//    private var words: [Word] {
-//        let descriptor: FetchDescriptor<Word>
-//        
-//        if let category = selectedCategory {
-//            descriptor = FetchDescriptor(
-//                predicate: #Predicate<Word> { word in
-//                    word.parentCategory == category
-//                }
-//            )
-//        } else {
-//            descriptor = FetchDescriptor()
-//        }
-//        
-//        do {
-//            return try modelContext.fetch(descriptor)
-//        } catch {
-//            print("error fetching words for UICollectionViewWrapper", error)
-//            return []
-//        }
-//    }
-    
-//    @Query(filter: #Predicate<Word> {word in
-//        word.parentCategory.id == selectedCategory?.id
-//    }) private var words: [Word]
-    
-    var words: [Word]
-    
+        
     func makeUIViewController(context: Context) -> UICollectionViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -302,12 +290,13 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
             let word = parent.words[indexPath.item]
             
             // Check if the word is already a favorite
-            var tempCategories = [
+            let tempCategories = [
                 Category(category: "C1"),
                 Category(category: "C2"),
                 Category(category: "C3")
 
             ]
+            
             cell.configure(with: word)
             cell.configureCategoryButton(with: parent.categories.isEmpty ? tempCategories : parent.categories)
             
@@ -320,6 +309,12 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
                 } catch {
                     print("error saving favorite: \(error.localizedDescription)")
                 }
+            }
+            
+            cell.onCategorySelected = { [weak self] category in
+                self?.parent.selectedCategory = category
+                
+                collectionView.reloadData()
             }
             
             
