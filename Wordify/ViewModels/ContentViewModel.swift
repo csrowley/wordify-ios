@@ -25,6 +25,25 @@ extension ContentView{
             return nil
         }
         
+        func checkIfCategoryExists(name: String, from context: ModelContext) -> Category? {
+            var descriptor = FetchDescriptor<Category>(
+                predicate: #Predicate<Category> { category in
+                    category.category == name
+                }
+            )
+            descriptor.fetchLimit = 1
+            
+            do {
+                let result = try context.fetch(descriptor).first
+                return result
+            } catch {
+                print("error finding specified category", error)
+                return nil
+            }
+            
+            
+        }
+        
         func parseJSONData(_ data: Data) -> [JSONData]? {
             do {
                 let decoder = JSONDecoder()
@@ -37,20 +56,35 @@ extension ContentView{
         
         @MainActor
         func importWordData(from data: Data, context: ModelContext, categoryType: String) async throws {
-            if let jsonWords = parseJSONData(data){
-                for jsonWord in jsonWords{
-                    let newWord = Word(word: jsonWord.word, audio: jsonWord.audio, phonetic: jsonWord.phonetic, definition: jsonWord.definition, category: jsonWord.category, wordType: jsonWord.type, example: jsonWord.example)
+            if let jsonWords = parseJSONData(data) {
+                // First, check if the category exists
+                var parentCategory = checkIfCategoryExists(name: categoryType, from: context)
+                
+                // If category doesn't exist, create it
+                if parentCategory == nil {
+                    parentCategory = Category(category: categoryType)
+                    context.insert(parentCategory!)
+                }
+                
+                for jsonWord in jsonWords {
+                    let newWord = Word(
+                        word: jsonWord.word,
+                        audio: jsonWord.audio,
+                        phonetic: jsonWord.phonetic,
+                        definition: jsonWord.definition,
+                        category: categoryType,  // Use the category type here
+                        wordType: jsonWord.type,
+                        example: jsonWord.example,
+                        parentCategory: parentCategory! //already handeled above (force wrap ok)
+                    )
                     context.insert(newWord)
                 }
                 
-                let newCategory = Category(category: categoryType)
-                context.insert(newCategory)
-                
-                do{
+                do {
                     try context.save()
-                    print("Successfuly saved word and category")
+                    print("Successfully saved words and category")
                 } catch {
-                    print("error saving word or category: \(error.localizedDescription)")
+                    print("Error saving word or category: \(error.localizedDescription)")
                 }
             }
         }

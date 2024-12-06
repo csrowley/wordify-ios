@@ -8,11 +8,6 @@
 import Foundation
 import SwiftData
 
-
-/// Seperate Data Model to hold all categories of words.
-/// Category type should be a primary key of the category model
-/// Word and Category share a relationship with n to m (Word can have different categories and Category can have many words)
-///
 /// On Main screen, we can have a label displaying the selected category,
 /// On Category screen, we will  have a list of all categories and allow the user to select the specific category? (Category screen can also be removed and we can just use a drop down picker with the category button on main screen) (premium categories will have a lock icon next to it)
 ///
@@ -29,10 +24,9 @@ final class Word: Identifiable{
     var example: String
     var isFavorite: Bool = false
     
-    //@Relationship(inverse: \Category.word_list) var categories: [Category]
-    // var category: Category
+    var parentCategory: Category
     
-    init(id: UUID = UUID(), word: String, audio: String, phonetic: String, definition: String, category: String, wordType: String, example: String) {
+    init(id: UUID = UUID(), word: String, audio: String, phonetic: String, definition: String, category: String, wordType: String, example: String, parentCategory: Category) {
         self.id = id
         self.word = word
         self.audio = audio
@@ -41,6 +35,7 @@ final class Word: Identifiable{
         self.category = category
         self.wordType = wordType
         self.example = example
+        self.parentCategory = parentCategory
     }
 }
 
@@ -57,10 +52,11 @@ final class Favorite {
 
 @Model
 final class Category {
+    var id: UUID
     var category: String
     var word_list: [Word]
-//    @Relationship(inverse: \Word.categories) var word_list: [Word]
-    init(category: String, word_list: [Word] = []) {
+    init(id: UUID = UUID(), category: String, word_list: [Word] = []) {
+        self.id = id
         self.category = category
         self.word_list = word_list
     }
