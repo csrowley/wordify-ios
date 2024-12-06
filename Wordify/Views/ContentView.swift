@@ -212,6 +212,7 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
 //    var words: [Word]
     @Binding var selectedCategory: Category?
     @Query var categories: [Category]
+    @Query var allWords: [Word]
     
     let previewWords = [
         Word(
@@ -234,7 +235,7 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
             return category.word_list
         } else {
             
-            return categories.first?.word_list ?? previewWords
+            return allWords
         }
     }
 
@@ -261,14 +262,14 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         
         if !words.isEmpty {
             if lastScrollIndex >= words.count {
-                lastScrollIndex = words.count
+                lastScrollIndex = words.count - 1  // Changed to count - 1
             }
         }
-        
-        if lastScrollIndex > 0{
+
+        if lastScrollIndex > 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 collectionViewController.collectionView.scrollToItem(
-                    at: IndexPath(item: min(lastScrollIndex, words.count - 1), section: 0),
+                    at: IndexPath(item: min(lastScrollIndex, words.count - 1), section: 0),  // Changed to count - 1
                     at: .top,
                     animated: false
                 )
@@ -336,17 +337,33 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
             
             cell.onCategorySelected = { [weak self] category in
                 self?.parent.selectedCategory = category
+                self?.parent.lastScrollIndex = 0
+                
                 
                 collectionView.reloadData()
+                collectionView.scrollToItem(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
+
             }
             
             
             return cell
         }
         
-        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-            let page = Int(scrollView.contentOffset.y / scrollView.bounds.height)
-            parent.lastScrollIndex = page
+//        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+//            let page = Int(scrollView.contentOffset.y / scrollView.bounds.height)
+//            parent.lastScrollIndex = page
+//        }
+        
+        func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+            let itemHeight = UIScreen.main.bounds.height
+            
+            let proposedIndex = Int(targetContentOffset.pointee.y / itemHeight)
+            
+            let boundedIndex = max(0, min(proposedIndex, words.count - 1)) // or words.count
+            
+            targetContentOffset.pointee.y = CGFloat(boundedIndex) * itemHeight
+            
+            parent.lastScrollIndex = boundedIndex
         }
         
     }
