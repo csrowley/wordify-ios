@@ -17,9 +17,6 @@ class WordCell: UICollectionViewCell{
     
     
     private var audioPlayer: AVPlayer?
-    
-    let charcoal = UIColor(red:0.29, green: 0.29, blue: 0.29, alpha: 1)
-    let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
 
     
     private let wordLabel = UILabel()
@@ -44,24 +41,24 @@ class WordCell: UICollectionViewCell{
         super.init(frame: frame)
 
         wordLabel.font = UIFont(name:"Newsreader16pt-Regular", size:40)
-        wordLabel.textColor = jetBlack
+        wordLabel.textColor = .jetBlack
         wordLabel.textAlignment = .center
 
         
         definitionLabel.font = UIFont(name:"Newsreader16pt-Regular", size:24)
-        definitionLabel.textColor = charcoal
+        definitionLabel.textColor = .charcoal
         definitionLabel.textAlignment = .center
         definitionLabel.numberOfLines = 0
         
         
         phoneticsLabel.font = UIFont(name:"Newsreader16pt-Italic", size:20)
-        phoneticsLabel.textColor = jetBlack
+        phoneticsLabel.textColor = .jetBlack
         phoneticsLabel.textAlignment = .center
         phoneticsLabel.numberOfLines = 0
         
         
         exampleLabel.font = UIFont(name:"Newsreader16pt-Italic", size:20)
-        exampleLabel.textColor = charcoal
+        exampleLabel.textColor = .charcoal
         exampleLabel.textAlignment = .center
         exampleLabel.numberOfLines = 0
         

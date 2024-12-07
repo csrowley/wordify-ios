@@ -33,14 +33,6 @@ struct ContentView: View {
     @State private var showAccountView = false
     
     // Sample Data
-    let cream = UIColor(red: 0.992, green: 0.984, blue: 0.831, alpha: 1)
-    let silver = UIColor(red: 0.769, green: 0.769, blue: 0.769, alpha: 1)
-    let jetBlack = UIColor(red:0.145, green: 0.145, blue: 0.145, alpha: 1)
-    let seashell = UIColor(red: 1, green: 0.945, blue: 0.906, alpha: 1)
-    let navyBlue = UIColor(red: 0, green: 0, blue: 0.502, alpha: 1)
-
-
-    let gunmentalGray = UIColor(red:0.53, green: 0.62, blue: 0.67, alpha: 1)
     
     
     let words = [
@@ -76,7 +68,7 @@ struct ContentView: View {
     init() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Color(seashell))
+        appearance.backgroundColor = .seashell
         
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
@@ -87,7 +79,7 @@ struct ContentView: View {
             
             TabView{
                 UICollectionViewWrapper(selectedCategory: $selectedCategory)
-                    .background(Color(seashell))
+                    .background(Color(.seashell))
                     .edgesIgnoringSafeArea(.all) // Make it full-screen
                     .tabItem{
                         Label("Discover", systemImage: "magnifyingglass")
@@ -141,7 +133,7 @@ struct ContentView: View {
                         Label("Saved", systemImage: "bookmark")
                     }
                 
-                Text("Hello:")
+                QuizView()
                     .tabItem{
                         Label("Quiz", systemImage: "graduationcap")
                     }
@@ -151,7 +143,7 @@ struct ContentView: View {
                 ToolbarItem(placement: .principal) {
                     Text("Wordify") // Set your title here
                         .font(Font.custom("NewsreaderRoman-SemiBold", size: 40))
-                        .foregroundStyle(Color(jetBlack))
+                        .foregroundStyle(Color(.jetBlack))
                 }
                 
                 ToolbarItem(placement: .topBarLeading){
@@ -162,7 +154,7 @@ struct ContentView: View {
                             .resizable()
                             .frame(width:30, height:30)
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(Color(navyBlue))
+                            .foregroundStyle(Color(.navyBlue))
                     }
                 }
                 
@@ -178,7 +170,7 @@ struct ContentView: View {
                                     Text("\(streakCount)")
                                         .font(.custom("NewsReader16pt-Regular", size: 16))
                                 }
-                                .foregroundStyle(Color(navyBlue))
+                                .foregroundStyle(Color(.navyBlue))
                             }
                             else{
                                 Group {
@@ -234,8 +226,7 @@ struct UICollectionViewWrapper: UIViewControllerRepresentable {
         if let category = selectedCategory {
             return category.word_list
         } else {
-            
-            return allWords
+            return allWords.isEmpty ? previewWords : allWords
         }
     }
 
