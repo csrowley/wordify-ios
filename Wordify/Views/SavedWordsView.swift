@@ -52,7 +52,6 @@ struct SavedWordsView: View {
             .scrollContentBackground(.hidden)
             .background(Color(seashell))
         }
-//        .edgesIgnoringSafeArea(.all)
     }
     
     

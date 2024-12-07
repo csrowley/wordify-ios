@@ -13,6 +13,32 @@ extension ContentView{
     
     @Observable
     class ViewModel {
+        
+        let previewWords = [
+            Word(
+                word: "Aberrant",
+                audio: "audio_aberrant.mp3",
+                phonetic: "/ˈæb.ər.ənt/",
+                definition: "Departing from an accepted standard.",
+                category: "C2",
+                wordType: "adjective",
+                example: "His aberrant behavior surprised everyone at the meeting.",
+                parentCategory: Category(category: "C2")
+            ),
+
+            Word(
+                word: "Ebullient",
+                audio: "audio_ebullient.mp3",
+                phonetic: "/ɪˈbʌl.i.ənt/",
+                definition: "Overflowing with enthusiasm or excitement.",
+                category: "C1",
+                wordType: "adjective",
+                example: "Her ebullient personality made her the life of the party.",
+                parentCategory: Category(category: "C1")
+
+            )
+        ]
+        
         func loadJSON(from fileName: String) -> Data? {
             if let url = Bundle.main.url(forResource: fileName, withExtension: ".json"){
                 do {
